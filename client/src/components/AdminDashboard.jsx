@@ -29,7 +29,7 @@ const AdminDashboard = ({ data }) => {
     {
       icon: FileTextIcon,
       value: data.pendingLeaves,
-      title: "PendingLeaves",
+      title: "Pending Leaves",
       description: "Awaiting approval",
     },
   ];
@@ -46,7 +46,7 @@ const AdminDashboard = ({ data }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
         {stats.map((s) => (
           <div
-            key={s}
+            key={s.title}
             className="card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between"
           >
             <div>
