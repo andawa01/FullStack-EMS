@@ -26,7 +26,7 @@ const Attendance = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayRecord = history.find(
-    (r) => new Date(r.Date).toDateString() === today.toDateString(),
+    (r) => new Date(r.date).toDateString() === today.toDateString(),
   );
 
   return (
