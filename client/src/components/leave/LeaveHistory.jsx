@@ -48,7 +48,7 @@ const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
                       </span>
                     </td>
                     <td className="text-xs text-slate-500">
-                      {format(new Date(leave.startDate), "MMM dd")} -
+                      {format(new Date(leave.startDate), "MMM dd")} -{" "}
                       {format(new Date(leave.endDate), "MMM dd, yyyy")}
                     </td>
                     <td
