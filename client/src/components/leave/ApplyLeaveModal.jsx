@@ -53,7 +53,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
             <select name="type" required>
               <option value="SICK">Sick Leave</option>
               <option value="CASUAL">Casual Leave</option>
-              <option value="ANNUAL">ANNUAL Leave</option>
+              <option value="ANNUAL">Annual Leave</option>
             </select>
           </div>
 
@@ -83,7 +83,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
             <textarea
               name="reason"
               required
-              row={3}
+              rows={3}
               className="resize-none"
               placeholder="Briefly describe why you need this leave..."
             />
