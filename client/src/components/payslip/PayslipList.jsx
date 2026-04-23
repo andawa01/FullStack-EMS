@@ -56,6 +56,7 @@ const PayslipList = ({ payslips, isAdmin }) => {
                           window.open(
                             `/print/payslips/${payslip._id || payslip.id}`,
                             "_blank",
+                            "noopener,noreferrer",
                           )
                         }
                         className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-blue-600 bg-blue-100 hover:bg-blue-200 transition-colors ring-1 ring-blue-600/10"
