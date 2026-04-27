@@ -8,21 +8,25 @@ export const login = async (req, res) => {
     try {
         const { email, password, role_type } = req.body;
 
-        if (!email || !password) {
+        if (!email || !password || !role_type) {
             return res.status(400).json({ error: "All fields are required" });
+        }
+
+        if (!["admin", "employee"].includes(role_type)) {
+            return res.status(400).json({ error: "Invalid role_type" });
         }
 
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
         if (role_type === "admin" && user.role !== "ADMIN") {
-            return res.status(401).json({ error: "Not authorized as admin" });
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
         if (role_type === "employee" && user.role !== "EMPLOYEE") {
-            return res.status(401).json({ error: "Not authorized as employee" });
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
         const isValid = await bcrypt.compare(password, user.password);
