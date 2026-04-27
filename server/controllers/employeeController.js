@@ -10,16 +10,19 @@ export const getEmployees = async (req, res) => {
         const where = {};
         if (department) where.department = department;
 
-        const employees = (await Employee.find(where)).toSorted({ createdAt: -1 }).populate("userId", "email role").lean();
+        const employees = await Employee.find(where)
+            .sort({ createdAt: -1 })
+            .populate("userId", "email role")
+            .lean();
 
         const result = employees.map((employee) => ({
-            ...Employee,
+            ...employee,
             id: employee._id.toString(),
             user: employee.userId ? {
                 email: employee.userId.email,
                 role: employee.userId.role
-            } : null
-        }))
+            } : null,
+        }));
         return res.json(result)
     } catch (error) {
         return res.status(500).json({ error: "Failed to fetch employees" })

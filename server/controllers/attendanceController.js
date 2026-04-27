@@ -19,18 +19,18 @@ export const clockInOut = async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const existing = await Attendance.findOne({ employee: employee._id, date: today });
+        const existing = await Attendance.findOne({ employeeId: employee._id, date: today });;
 
         const now = new Date();
 
         if (!existing) {
-            const isLate = now.getHours() >= 9 && now.getMinutes() > 0;
+            const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 0);
 
             const attendance = await Attendance.create({
-                employee: employee._id,
+                employeeId: employee._id,
                 date: today,
                 checkIn: now,
-                status: isLaten ? "LATE : " : "PRESENT",
+                status: isLate ? "LATE : " : "PRESENT",
             })
 
             return res.json({ success: true, type: "CHECK_IN", data: attendance });
@@ -75,7 +75,7 @@ export const getAttendance = async (req, res) => {
             return res.status(404).json({ error: "Employee not found" });
         }
 
-        const limit = parseInt(req.limit || 30);
+        const limit = Math.min(parseInt(req.query.limit, 10) || 30, 365);
         const history = await Attendance.find({ employeeId: employee._id }).sort({ date: -1 }).limit(limit);
 
         return res.json({

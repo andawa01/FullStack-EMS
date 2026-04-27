@@ -27,7 +27,7 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const session = req.session;
-        const employee = await Employee.findById({ userId: session.userId });
+        const employee = await Employee.findOne({ userId: session.userId });;
 
         if (!employee) return res.status(404).json({ error: "Employee not found" });
 
