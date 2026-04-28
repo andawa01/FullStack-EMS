@@ -1,4 +1,4 @@
-import Employee from "../models/employeeModel.js";
+import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 
 // create leave
@@ -22,21 +22,27 @@ export const createLeave = async (req, res) => {
             return res.status(400).json({ error: "All fields are required" });
         }
 
+        const parsedStartDate = new Date(startDate);
+        const parsedEndDate = new Date(endDate);
+        if (Number.isNaN(parsedStartDate.getTime()) || Number.isNaN(parsedEndDate.getTime())) {
+            return res.status(400).json({ error: "Invalid date format" });
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        if (new Date(startDate) <= today || new Date(endDate) <= today) {
+        if (parsedStartDate <= today || parsedEndDate <= today) {
             return res.status(400).json({ error: "Start date and end date must be in the future" });
         }
 
-        if (new Date(endDate) < new Date(startDate)) {
+        if (parsedEndDate < parsedStartDate) {
             return res.status(400).json({ error: "End date must be after start date" });
         }
 
         const leave = await LeaveApplication.create({
             employeeId: employee._id,
             type,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+            startDate: parsedStartDate,
+            endDate: parsedEndDate,
             reason,
             status: "PENDING",
         })
@@ -56,7 +62,7 @@ export const getLeaves = async (req, res) => {
         if (isAdmin) {
             const status = req.query.status;
             const where = status ? { status } : {};
-            const leaves = (await LeaveApplication.find(where).populate("employeeId")).toSort({ createdAt: -1 });
+            const leaves = (await LeaveApplication.find(where).populate("employeeId")).sort({ createdAt: -1 });
             const data = leaves.map((leave) => {
                 const obj = leave.toObject();
                 return {
@@ -96,6 +102,10 @@ export const updateLeaveStatus = async (req, res) => {
         }
 
         const leave = await LeaveApplication.findByIdAndUpdate(req.params.id, { status }, { returnDocument: "after" });
+
+        if (!leave) {
+            return res.status(404).json({ error: "Leave application not found" });
+        }
 
         return res.json({ success: true, data: leave })
     } catch (error) {
