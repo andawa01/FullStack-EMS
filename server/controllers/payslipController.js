@@ -11,15 +11,39 @@ export const createPayslip = async (req, res) => {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        const netSalary = Number(basicSalary) + Number(allowances || 0) - Number(deductions || 0);
+        const parsedMonth = Number(month);
+        const parsedYear = Number(year);
+        const parsedBasicSalary = Number(basicSalary);
+        const parsedAllowances = Number(allowances || 0);
+        const parsedDeductions = Number(deductions || 0);
+
+        if (
+            !Number.isFinite(parsedMonth) ||
+            !Number.isFinite(parsedYear) ||
+            !Number.isFinite(parsedBasicSalary) ||
+            !Number.isFinite(parsedAllowances) ||
+            !Number.isFinite(parsedDeductions) ||
+            parsedMonth < 1 || parsedMonth > 12 ||
+            parsedYear < 1900 ||
+            parsedBasicSalary < 0 || parsedAllowances < 0 || parsedDeductions < 0
+        ) {
+            return res.status(400).json({ error: "Invalid payroll values" });
+        }
+
+        const employee = await Employee.findById(employeeId).lean();
+        if (!employee || employee.isDeleted) {
+            return res.status(404).json({ error: "Employee not found" });
+        }
+
+        const netSalary = parsedBasicSalary + parsedAllowances - parsedDeductions;
 
         const payslip = await Payslip.create({
             employeeId,
-            month: Number(month),
-            year: Number(year),
-            basicSalary: Number(basicSalary),
-            allowances: Number(allowances || 0),
-            deductions: Number(deductions || 0),
+            month: parsedMonth,
+            year: parsedYear,
+            basicSalary: parsedBasicSalary,
+            allowances: parsedAllowances,
+            deductions: parsedDeductions,
             netSalary
         });
 
@@ -68,7 +92,19 @@ export const getPayslips = async (req, res) => {
 // GET /api/payslips/:id
 export const getPayslipById = async (req, res) => {
     try {
-        const payslip = await Payslip.findById(req.params.id).populate("employeeId").lean();
+        const session = req.session;
+        const isAdmin = session.role === "ADMIN";
+
+        let query = { _id: req.params.id };
+        if (!isAdmin) {
+            const employee = await Employee.findOne({ userId: session.userId }).lean();
+            if (!employee) {
+                return res.status(404).json({ error: "Employee not found" });
+            }
+            query.employeeId = employee._id;
+        }
+
+        const payslip = await Payslip.findOne(query).populate("employeeId").lean();
 
         if (!payslip) {
             return res.status(404).json({ error: "Payslip not found" });
