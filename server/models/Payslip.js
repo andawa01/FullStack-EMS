@@ -9,10 +9,10 @@ const payslipSchema = new mongoose.Schema({
     deductions: { type: Number, default: 0 },
     netSalary: { type: Number, required: true },
 
-}, { timestamps: true })
-
-const Payslip = mongoose.models.Payslip || mongoose.model("Payslip", payslipSchema);
+}, { timestamps: true });
 
 payslipSchema.index({ employeeId: 1, month: 1, year: 1 }, { unique: true });
+
+const Payslip = mongoose.models.Payslip || mongoose.model("Payslip", payslipSchema);
 
 export default Payslip;
