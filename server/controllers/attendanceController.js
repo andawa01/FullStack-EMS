@@ -34,13 +34,15 @@ export const clockInOut = async (req, res) => {
                 status: isLate ? "LATE : " : "PRESENT",
             })
 
-            await inngest.send({
+            inngest.send({
                 name: "employee/check-out",
                 data: {
                     employeeId: employee._id,
                     attendanceId: attendance._id
                 }
-            })
+            }).catch((error) => {
+                console.error("Failed to enqueue employee/check-out", error);
+            });
 
             return res.json({ success: true, type: "CHECK_IN", data: attendance });
         } else if (!existing.checkOut) {
