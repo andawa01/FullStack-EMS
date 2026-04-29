@@ -48,11 +48,13 @@ export const createLeave = async (req, res) => {
             status: "PENDING",
         })
 
-        await inngest.send({
+        inngest.send({
             name: "leave/pending",
             data: {
                 leaveApplicationId: leave._id
             }
+        }).catch((error) => {
+            console.error("Failed to enqueue leave/pending", error);
         })
 
         return res.status(201).json({ success: true, data: leave })
