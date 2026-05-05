@@ -57,11 +57,14 @@ export const createPayslip = async (req, res) => {
 // GET /api/payslips
 export const getPayslips = async (req, res) => {
     try {
-        const session = req.session;
-        const isAdmin = session.role === "ADMIN";
+        const user = req.user;
+        const isAdmin = user?.role === "ADMIN";
 
         if (isAdmin) {
-            const payslips = await Payslip.find().populate("employeeId").sort({ createdAt: -1 });
+            const payslips = await Payslip.find()
+                .populate("employeeId")
+                .sort({ createdAt: -1 });
+
             const data = payslips.map((payslip) => {
                 const obj = payslip.toObject();
                 return {
@@ -69,42 +72,51 @@ export const getPayslips = async (req, res) => {
                     id: obj._id.toString(),
                     employee: obj.employeeId,
                     employeeId: obj.employeeId?._id?.toString(),
-                }
-            })
-            return res.json(data);
+                };
+            });
+
+            return res.json({ data });
         } else {
-            const employee = await Employee.findOne({ userId: session.userId }).lean();
+            const employee = await Employee.findOne({ userId: user.userId }).lean();
 
             if (!employee) {
                 return res.status(404).json({ error: "Employee not found" });
             }
 
-            const payslips = await Payslip.find({ employeeId: employee._id }).sort({ createdAt: -1 });
+            const payslips = await Payslip.find({ employeeId: employee._id })
+                .sort({ createdAt: -1 });
 
             return res.json({ data: payslips });
         }
+
     } catch (error) {
+        console.error("GET PAYSLIPS ERROR:", error);
         return res.status(500).json({ error: "Failed to fetch payslips" });
     }
-}
+};
 
 // Get payslip by ID
 // GET /api/payslips/:id
 export const getPayslipById = async (req, res) => {
     try {
-        const session = req.session;
-        const isAdmin = session.role === "ADMIN";
+        const user = req.user;
+        const isAdmin = user?.role === "ADMIN";
 
         let query = { _id: req.params.id };
+
         if (!isAdmin) {
-            const employee = await Employee.findOne({ userId: session.userId }).lean();
+            const employee = await Employee.findOne({ userId: user.userId }).lean();
+
             if (!employee) {
                 return res.status(404).json({ error: "Employee not found" });
             }
+
             query.employeeId = employee._id;
         }
 
-        const payslip = await Payslip.findOne(query).populate("employeeId").lean();
+        const payslip = await Payslip.findOne(query)
+            .populate("employeeId")
+            .lean();
 
         if (!payslip) {
             return res.status(404).json({ error: "Payslip not found" });
@@ -114,12 +126,13 @@ export const getPayslipById = async (req, res) => {
             ...payslip,
             id: payslip._id.toString(),
             employee: payslip.employeeId,
-
         };
 
         return res.json(result);
+
     } catch (error) {
+        console.error("GET PAYSLIP BY ID ERROR:", error);
         return res.status(500).json({ error: "Failed to fetch payslip" });
     }
-}
+};
 

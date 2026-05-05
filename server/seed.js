@@ -10,7 +10,7 @@ async function registerAdmin() {
         const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
         if (!ADMIN_EMAIL) {
-            console.error("Missin ADMIN_EMAIL env variable");
+            console.error("Missing ADMIN_EMAIL env variable");
             process.exit(1);
         }
 
