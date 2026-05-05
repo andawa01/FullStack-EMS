@@ -8,9 +8,13 @@ import Payslip from "../models/Payslip.js";
 // GET /api/dashboard
 export const getDashboard = async (req, res) => {
     try {
-        const session = req.session;
+        const user = req.user;
 
-        if (session.role === "ADMIN") {
+        if (!user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        if (user.role === "ADMIN") {
             const [totalEmployees, totalAttendance, pendingLeaves] = await Promise.all([
                 Employee.countDocuments({ isDeleted: { $ne: true } }),
                 Attendance.countDocuments({
@@ -20,7 +24,7 @@ export const getDashboard = async (req, res) => {
                     },
                 }),
                 LeaveApplication.countDocuments({ status: "PENDING" })
-            ])
+            ]);
 
             return res.json({
                 role: "ADMIN",
@@ -28,39 +32,45 @@ export const getDashboard = async (req, res) => {
                 totalDepartments: DEPARTMENTS.length,
                 totalAttendance,
                 pendingLeaves
-            })
-        } else {
-            const employee = await Employee.findOne({ userId: session.userId }).lean();
-
-            if (!employee) {
-                return res.status(404).json({ error: "Employee not found" });
-            }
-
-            const today = new Date();
-            const [currentMonthAttendance, pendingLeaves, LatestPayslips] = await Promise.all([
-                Attendance.countDocuments({
-                    employeeId: employee._id,
-                    date: {
-                        $gte: new Date(today.getFullYear(), today.getMonth(), 1),
-                        $lt: new Date(today.getFullYear(), today.getMonth() + 1, 1),
-                    },
-                }),
-                LeaveApplication.countDocuments({
-                    employeeId: employee._id, status: "PENDING"
-                }),
-                Payslip.find({ employeeId: employee._id }).sort({ createdAt: -1 }).lean(),
-            ])
-
-            return res.json({
-                role: "EMPLOYEE",
-                employee: { ...employee, id: employee._id.toString() },
-                currentMonthAttendance,
-                pendingLeaves,
-                LatestPayslips: latestPayslip ? { ...latestPayslip, id: latestPayslip._id.toString() } : null
-            })
+            });
         }
+
+        // EMPLOYEE
+        const employee = await Employee.findOne({ userId: user.userId }).lean();
+
+        if (!employee) {
+            return res.status(404).json({ error: "Employee not found" });
+        }
+
+        const today = new Date();
+
+        const [currentMonthAttendance, pendingLeaves, latestPayslips] = await Promise.all([
+            Attendance.countDocuments({
+                employeeId: employee._id,
+                date: {
+                    $gte: new Date(today.getFullYear(), today.getMonth(), 1),
+                    $lt: new Date(today.getFullYear(), today.getMonth() + 1, 1),
+                },
+            }),
+            LeaveApplication.countDocuments({
+                employeeId: employee._id,
+                status: "PENDING"
+            }),
+            Payslip.find({ employeeId: employee._id })
+                .sort({ createdAt: -1 })
+                .lean(),
+        ]);
+
+        return res.json({
+            role: "EMPLOYEE",
+            employee: { ...employee, id: employee._id.toString() },
+            currentMonthAttendance,
+            pendingLeaves,
+            latestPayslips: latestPayslips || []
+        });
+
     } catch (error) {
-        console.error(" Dashboard error:", error);
+        console.error("Dashboard error:", error);
         return res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
-}
+};
